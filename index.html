@@ -228,18 +228,21 @@
             </div>
         </div>
 
-        <div id="request" class="notyet" /></div>
-        <div id="message1" class="message notyet" /></div>
-        <div id="message2" class="message notyet" /></div>
-        <div id="message3" class="message notyet" /></div>
+        <div id="request" class="message notyet" /></div>
+        <div id="out-message1" class="message out-message notyet" /></div>
+        <div id="out-message2" class="message out-message notyet" /></div>
+        <div id="out-message3" class="message out-message notyet" /></div>
+        <div id="return-message1" class="message return-message notyet" /></div>
+        <div id="return-message2" class="message return-message notyet" /></div>
+        <div id="return-message3" class="message return-message notyet" /></div>
+        <div id="return-message4" class="message return-message notyet" /></div>
+        <div id="response" class="message notyet" /></div>
     </div>
 
     <div id="apr-incoming-request" class="step dummy" data-x="-1000" data-y="-1500">
         <script type="text/javascript">
             onStepEnter("apr-incoming-request", function(e) { 
-                $("#request").removeClass("notyet")
-                $("#request").addClass("incoming")
-                //$("#apr-create-apr").classList.remove("test")
+                $("#request").removeClass("notyet").addClass("go")
             })
         </script>
     </div>
@@ -247,7 +250,7 @@
     <div id="apr-create-apr" class="step dummy" data-x="-1000" data-y="-1500">
         <script type="text/javascript">
             onStepEnter("apr-create-apr", function(e) {
-                $("#request").removeClass("incoming").addClass("apr-request")
+                $("#request").removeClass("go").addClass("apr-request")
                 $(".apr-actor").addClass("create")
             })
         </script>
@@ -265,16 +268,8 @@
     <div id="apr-fire-messages" class="step dummy" data-x="-1000" data-y="-1500">
         <script type="text/javascript">
             onStepEnter("apr-fire-messages", function(e) {
-                $("#message1").removeClass("notyet").addClass("go")
-                $("#message2").removeClass("notyet").addClass("go")
-            })
-        </script>
-    </div>
-
-    <div id="apr-wl-message-back" class="step dummy" data-x="-1000" data-y="-1500">
-        <script type="text/javascript">
-            onStepEnter("apr-wl-message-back", function(e) {
-                $("#message1").removeClass("go").addClass("comeback")
+                $("#out-message1").removeClass("notyet").addClass("go")
+                $("#out-message2").removeClass("notyet").addClass("go")
             })
         </script>
     </div>
@@ -282,7 +277,66 @@
     <div id="apr-alert-message-back" class="step dummy" data-x="-1000" data-y="-1500">
         <script type="text/javascript">
             onStepEnter("apr-alert-message-back", function(e) {
-                $("#message2").removeClass("go").addClass("comeback")
+                $("#out-message2").addClass("stop")
+                $("#return-message2").removeClass("notyet").addClass("go")
+            })
+        </script>
+    </div>
+
+    <div id="apr-wl-message-back" class="step dummy" data-x="-1000" data-y="-1500">
+        <script type="text/javascript">
+            onStepEnter("apr-wl-message-back", function(e) {
+                $("#out-message1").addClass("stop")
+                $("#return-message1").removeClass("notyet").addClass("go")
+            })
+        </script>
+    </div>
+
+    <div id="apr-fire-ps-message" class="step dummy" data-x="-1000" data-y="-1500">
+        <script type="text/javascript">
+            onStepEnter("apr-fire-ps-message", function(e) {
+                $("#out-message3").removeClass("notyet").addClass("go")
+            })
+        </script>
+    </div>
+
+    <div id="apr-ps-message-back" class="step dummy" data-x="-1000" data-y="-1500">
+        <script type="text/javascript">
+            onStepEnter("apr-ps-message-back", function(e) {
+                $("#out-message3").addClass("stop")
+                $("#return-message3").removeClass("notyet").addClass("go")
+            })
+        </script>
+    </div>
+
+    <div id="apr-complete-response-message" class="step dummy" data-x="-1000" data-y="-1500">
+        <script type="text/javascript">
+            onStepEnter("apr-complete-response-message", function(e) {
+                $("#return-message1").addClass("stop")
+                $("#return-message2").addClass("stop")
+                $("#return-message3").addClass("stop")
+                $("#return-message4").removeClass("notyet").addClass("go")
+            })
+        </script>
+    </div>
+
+    <div id="apr-complete-response" class="step dummy" data-x="-1000" data-y="-1500">
+        <script type="text/javascript">
+            onStepEnter("apr-complete-response", function(e) {
+                $("#request").addClass("stop")
+                $("#return-message4").addClass("stop")
+                $("#response").removeClass("notyet").addClass("go")
+            })
+        </script>
+    </div>
+
+    <div id="apr-cleanup" class="step dummy" data-x="-1000" data-y="-1500">
+        <script type="text/javascript">
+            onStepEnter("apr-cleanup", function(e) {
+                $(".apr-actor").addClass("stop")
+                $("#root-app-actor").removeClass("create").addClass("stop")
+                $("#routing-to-app").removeClass("create").addClass("stop")
+                $(".apr-actor").removeClass("create").addClass("stop")
             })
         </script>
     </div>

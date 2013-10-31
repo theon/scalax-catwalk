@@ -74,7 +74,9 @@
     <meta name="author" content="Bartek Szopka" />
 
     <!-- <link href="http://fonts.googleapis.com/css?family=Open+Sans:regular,semibold,italic,italicsemibold|PT+Sans:400,700,400italic,700italic|PT+Serif:400,700,400italic,700italic" rel="stylesheet" /> -->
-    <link href="css/font.css" rel="stylesheet" /> 
+    <link href="css/impress-demo.css" rel="stylesheet" />
+    <link href="css/font.css" rel="stylesheet" />
+    <link href="css/tomorrow-night.css" rel="stylesheet" />
 
     <!--
         
@@ -91,20 +93,62 @@
         When creating your own presentation get rid of this file. Start from scratch, it's fun!
         
     -->
-    <link href="css/impress-demo.css" rel="stylesheet" />
     
 <!--     <link rel="shortcut icon" href="favicon.png" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" /> -->
 
     <script type="text/javascript" src="js/jquery-1.10.2.js"></script>
+    <script type="text/javascript" src="js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
 
     <script type="text/javascript">
+        var lastSlide = null
+
+        document.addEventListener("impress:stepleave", function (event) {
+            lastSlide = event.target
+        })
+
+        var animations = {}
+
+
         function onStepEnter(id, f) {
-            document.addEventListener("impress:stepenter", function (event) {
-                if(event.target.id == id) {
-                    f(event);
+            document.addEventListener("impress:stepenter", function (event) {                
+                var slide = event.target
+                if(slide.id == id) {
+                    f(slide)
                 }
-            }, false);
+            }, false)
+        }
+
+        function slideAnimation(slide, selector) {
+            console.log(lastSlide)
+            if(forwardDirection(slide)) {
+                animations[slide.id].forEach(function(animation) {
+                    $(animation.selector).addClass(animation.classes)
+                })
+            } else if(lastSlide != null) {
+                animations[lastSlide.id].forEach(function(animation) {
+                    $(animation.selector).removeClass(animation.classes)
+                })
+            }
+        }
+
+        function forwardDirection(slide) {
+            var steps = $(".step")
+            var index = steps.index(slide)
+            var prevIndex = steps.index(lastSlide)
+            return index > prevIndex || index == 0 && prevIndex == (steps.length - 1)
+        }
+
+        function onSlideAddClass(slideId, elemSelector, classes) {
+            if(animations[slideId] == null) {
+                animations[slideId] = []
+            }
+            animations[slideId].push({selector: elemSelector, classes: classes})
+
+            onStepEnter(slideId, function(slide) {
+                slideAnimation(slide, elemSelector, classes)
+            })
         }
     </script>
 </head>
@@ -241,104 +285,132 @@
 
     <div id="apr-incoming-request" class="step dummy" data-x="-1000" data-y="-1500">
         <script type="text/javascript">
-            onStepEnter("apr-incoming-request", function(e) { 
-                $("#request").removeClass("notyet").addClass("go")
-            })
+
+
+            onSlideAddClass("apr-incoming-request", "#request", "go")
+
+            // onStepEnter("apr-incoming-request", function(e) { 
+            //     $("#request").removeClass("notyet")
+            // })
         </script>
     </div>
 
     <div id="apr-create-apr" class="step dummy" data-x="-1000" data-y="-1500">
         <script type="text/javascript">
-            onStepEnter("apr-create-apr", function(e) {
-                $("#request").removeClass("go").addClass("apr-request")
-                $(".apr-actor").addClass("create")
-            })
+            onSlideAddClass("apr-create-apr", "#request", "apr-request")
+            onSlideAddClass("apr-create-apr", ".apr-actor", "create")
         </script>
     </div>
 
     <div id="apr-create-app-actors" class="step dummy" data-x="-1000" data-y="-1500">
         <script type="text/javascript">
-            onStepEnter("apr-create-app-actors", function(e) {
-                $("#root-app-actor").removeClass("notyet").addClass("create")
-                $("#routing-to-app").removeClass("notyet").addClass("create")
-            })
+            onSlideAddClass("apr-create-app-actors", "#root-app-actor", "create")
+            onSlideAddClass("apr-create-app-actors", "#routing-to-app", "create")
         </script>
     </div>
 
     <div id="apr-fire-messages" class="step dummy" data-x="-1000" data-y="-1500">
         <script type="text/javascript">
-            onStepEnter("apr-fire-messages", function(e) {
-                $("#out-message1").removeClass("notyet").addClass("go")
-                $("#out-message2").removeClass("notyet").addClass("go")
-            })
+            onSlideAddClass("apr-fire-messages", "#out-message1", "go")
+            onSlideAddClass("apr-fire-messages", "#out-message2", "go")
         </script>
     </div>
 
     <div id="apr-alert-message-back" class="step dummy" data-x="-1000" data-y="-1500">
         <script type="text/javascript">
-            onStepEnter("apr-alert-message-back", function(e) {
-                $("#out-message2").addClass("stop")
-                $("#return-message2").removeClass("notyet").addClass("go")
-            })
+            onSlideAddClass("apr-alert-message-back", "#out-message2", "stop")
+            onSlideAddClass("apr-alert-message-back", "#return-message2", "go")
         </script>
     </div>
 
     <div id="apr-wl-message-back" class="step dummy" data-x="-1000" data-y="-1500">
         <script type="text/javascript">
-            onStepEnter("apr-wl-message-back", function(e) {
-                $("#out-message1").addClass("stop")
-                $("#return-message1").removeClass("notyet").addClass("go")
-            })
+            onSlideAddClass("apr-wl-message-back", "#out-message1", "stop")
+            onSlideAddClass("apr-wl-message-back", "#return-message1", "go")
         </script>
     </div>
 
     <div id="apr-fire-ps-message" class="step dummy" data-x="-1000" data-y="-1500">
         <script type="text/javascript">
-            onStepEnter("apr-fire-ps-message", function(e) {
-                $("#out-message3").removeClass("notyet").addClass("go")
-            })
+            onSlideAddClass("apr-fire-ps-message", "#out-message3", "go")
         </script>
     </div>
 
     <div id="apr-ps-message-back" class="step dummy" data-x="-1000" data-y="-1500">
         <script type="text/javascript">
-            onStepEnter("apr-ps-message-back", function(e) {
-                $("#out-message3").addClass("stop")
-                $("#return-message3").removeClass("notyet").addClass("go")
-            })
+            onSlideAddClass("apr-ps-message-back", "#out-message3", "stop")
+            onSlideAddClass("apr-ps-message-back", "#return-message3", "go")
         </script>
     </div>
 
     <div id="apr-complete-response-message" class="step dummy" data-x="-1000" data-y="-1500">
-        <script type="text/javascript">
-            onStepEnter("apr-complete-response-message", function(e) {
-                $("#return-message1").addClass("stop")
-                $("#return-message2").addClass("stop")
-                $("#return-message3").addClass("stop")
-                $("#return-message4").removeClass("notyet").addClass("go")
-            })
+        <script type="text/javascript">            
+            onSlideAddClass("apr-complete-response-message", "#return-message1", "stop")
+            onSlideAddClass("apr-complete-response-message", "#return-message2", "stop")
+            onSlideAddClass("apr-complete-response-message", "#return-message3", "stop")
+            onSlideAddClass("apr-complete-response-message", "#return-message4", "go")
         </script>
     </div>
 
     <div id="apr-complete-response" class="step dummy" data-x="-1000" data-y="-1500">
         <script type="text/javascript">
-            onStepEnter("apr-complete-response", function(e) {
-                $("#request").addClass("stop")
-                $("#return-message4").addClass("stop")
-                $("#response").removeClass("notyet").addClass("go")
-            })
+            onSlideAddClass("apr-complete-response", "#request", "stop")
+            onSlideAddClass("apr-complete-response", "#return-message4", "stop")
+            onSlideAddClass("apr-complete-response", "#response", "go")
         </script>
     </div>
 
     <div id="apr-cleanup" class="step dummy" data-x="-1000" data-y="-1500">
         <script type="text/javascript">
-            onStepEnter("apr-cleanup", function(e) {
-                $(".apr-actor").addClass("stop")
-                $("#root-app-actor").removeClass("create").addClass("stop")
-                $("#routing-to-app").removeClass("create").addClass("stop")
-                $(".apr-actor").removeClass("create").addClass("stop")
-            })
+            onSlideAddClass("apr-cleanup", ".apr-actor", "stop")
+            onSlideAddClass("apr-cleanup", "#root-app-actor", "stop")
+            onSlideAddClass("apr-cleanup", "#routing-to-app", "stop")
+            onSlideAddClass("apr-cleanup", ".apr-actor", "stop")
         </script>
+    </div>
+
+    <div id="apr-code" class="step slide" data-x="1000" data-y="-1500">
+        <pre>
+            <code class="scala">
+abstract class PerRequestActor(r: RequestContext,
+                               message: DomainObject) 
+                               extends Actor {
+  def target: ActorRef
+  setReceiveTimeout(5 seconds)
+  target ! request
+
+  def receive = {
+    case ReceiveTimeout    => completeWithTimeout  
+    case Failure(e)        => completeWithError(e)
+    case res: DomainObject => completeWithSuccess(res)
+  }
+
+  def completeWithSuccess(res: DomainObject) = {
+    r.complete(res)
+    stop(self)
+  }
+
+  def completeWithError{e: Throwable) = {
+    r.complete(InternalServerError, Error(e))
+    stop(self)
+  }
+
+  def completeWithTimeout = {
+    r.complete(GatewayTimeout, Timeout)
+    stop(self)
+  }
+
+  override val supervisorStrategy =
+    OneForOneStrategy() {
+      case e => {
+        completeWithError(e)
+        stop(self)
+        Stop
+      }
+    }
+}
+            </code>
+        </pre>
     </div>
 
 <!-- 
@@ -452,13 +524,13 @@
         Using classic `id`-based links like `#step-2` makes these links usable also in fallback mode.
         
     -->
-    <div class="step slide" data-x="0" data-y="-1500">
+<!--     <div class="step slide" data-x="0" data-y="-1500">
         <q>Don't you think that presentations given <strong>in modern browsers</strong> shouldn't <strong>copy the limits</strong> of 'classic' slide decks?</q>
     </div>
 
     <div class="step slide" data-x="1000" data-y="-1500">
         <q>Would you like to <strong>impress your audience</strong> with <strong>stunning visualization</strong> of your talk?</q>
-    </div>
+    </div> -->
 
     <div class="step slide" data-x="2000" data-y="-1500">
         <q>sdf;smfs;dmfs;dkmf;m;sdlmf</q>
@@ -618,23 +690,26 @@ if ("ontouchstart" in document.documentElement) {
 }
 </script>
  -->
-<!--
-    
-    Last, but not least.
-    
-    To make all described above really work, you need to include impress.js in the page.
-    I strongly encourage to minify it first.
-    
-    In here I just include full source of the script to make it more readable.
-    
-    You also need to call a `impress().init()` function to initialize impress.js presentation.
-    And you should do it in the end of your document. Not only because it's a good practice, but also
-    because it should be done when the whole document is ready.
-    Of course you can wrap it in any kind of "DOM ready" event, but I was too lazy to do so ;)
-    
--->
-<script src="js/impress.js"></script>
-<script>impress().init();</script>
+    <!--
+        
+        Last, but not least.
+        
+        To make all described above really work, you need to include impress.js in the page.
+        I strongly encourage to minify it first.
+        
+        In here I just include full source of the script to make it more readable.
+        
+        You also need to call a `impress().init()` function to initialize impress.js presentation.
+        And you should do it in the end of your document. Not only because it's a good practice, but also
+        because it should be done when the whole document is ready.
+        Of course you can wrap it in any kind of "DOM ready" event, but I was too lazy to do so ;)
+        
+    -->
+    <script src="js/impress.js"></script>
+    <script>
+        var impress = impress()
+        impress.init()
+    </script>
 
 <!--
     

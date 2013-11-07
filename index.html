@@ -68,15 +68,22 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=1024" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <title>impress.js | presentation tool based on the power of CSS3 transforms and transitions in modern browsers | by Bartek Szopka @bartaz</title>
+    <title>Scala does the catwalk - Scala eXchange 2013 - Ian Forsey and Ariel Kogan</title>
     
-    <meta name="description" content="impress.js is a presentation tool based on the power of CSS3 transforms and transitions in modern browsers and inspired by the idea behind prezi.com." />
-    <meta name="author" content="Bartek Szopka" />
+    <meta name="description" content="In this session we will share our experience creating our first production Scala service in a company with a long-standing Java codebase and production infrastructure" />
+    <meta name="author" content="Ian Forsey" />
+    <meta name="author" content="Ariel Kogan" />
 
     <!-- <link href="http://fonts.googleapis.com/css?family=Open+Sans:regular,semibold,italic,italicsemibold|PT+Sans:400,700,400italic,700italic|PT+Serif:400,700,400italic,700italic" rel="stylesheet" /> -->
     <link href="css/impress-demo.css" rel="stylesheet" />
     <link href="css/font.css" rel="stylesheet" />
-    <link href="css/tomorrow-night.css" rel="stylesheet" />
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:800' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Raleway:900' rel='stylesheet' type='text/css'>
+    <link href="http://fonts.googleapis.com/css?family=Oleo+Script" rel="stylesheet" type="text/css">
+    <link href='http://fonts.googleapis.com/css?family=Sintony:700,400' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Damion' rel='stylesheet' type='text/css'>
+    <!-- <link href="css/tomorrow-night.css" rel="stylesheet" /> -->
+    <link href="css/idea.css" rel="stylesheet" />
 
     <!--
         
@@ -121,22 +128,39 @@
         }
 
         function slideAnimation(slide, selector) {
-            console.log(lastSlide)
+            var steps = $(".step")
             if(forwardDirection(slide)) {
-                animations[slide.id].forEach(function(animation) {
-                    $(animation.selector).addClass(animation.classes)
-                })
-            } else if(lastSlide != null) {
-                animations[lastSlide.id].forEach(function(animation) {
-                    $(animation.selector).removeClass(animation.classes)
-                })
+                for(var i = slideIndex(lastSlide); i <= slideIndex(slide); i++) {
+                    var slideId = steps[i].id
+                    var slideAnimation = animations[slideId]
+                    if(slideAnimation != null) {
+                        slideAnimation.forEach(function(animation) {
+                            $(animation.selector).addClass(animation.classes)
+                        })
+                    }
+                }
+            } 
+            else if(lastSlide != null) {
+                for(var i = slideIndex(lastSlide); i > slideIndex(slide); i--) {
+                    var slideId = steps[i].id
+                    var slideAnimation = animations[slideId]
+                    if(slideAnimation != null) {
+                        animations[lastSlide.id].forEach(function(animation) {
+                            $(animation.selector).removeClass(animation.classes)
+                        })
+                    }
+                }
             }
         }
 
-        function forwardDirection(slide) {
+        function slideIndex(slide) {
             var steps = $(".step")
-            var index = steps.index(slide)
-            var prevIndex = steps.index(lastSlide)
+            return steps.index(slide)
+        }
+
+        function forwardDirection(slide) {
+            var index = slideIndex(slide)
+            var prevIndex = slideIndex(lastSlide)
             return index > prevIndex || index == 0 && prevIndex == (steps.length - 1)
         }
 
@@ -203,26 +227,116 @@
     
 -->
 <div id="impress">
+    <div class="step title-slide" data-x="-5000" data-y="-1500">
+        <h1>Scala does the catwalk</h1>
+        <p>Ian Forsey - Ariel Kogan</p>
+        <img src="images/nap_logo.jpg" />
+        <a href="http://github.com/netaporter/scalax-catwalk">http://github.com/netaporter/scalax-catwalk</a>
+        <div class="notes">
+            Introduction - names and company<br />
+            talk is about our first scala project
+        </div>
+    </div>
 
-    <!--
+    <div class="system-arch step" data-x="-4000" data-y="-1500">
+        <img class="fullsize-w" src="images/system_arch.png" />
+    </div>
+
+    <div class="woas-arch step" data-x="-3855" data-y="-1500" data-scale="0.15">
+        <img class="fullsize-h" src="images/woas_arch.png" />
+    </div>
+
+    <div class="step" data-x="-3000" data-y="-1500">
+        <h1>Actor Tells vs Actor Asks</h1>
+        <ul>
+            <li>Futures only for small tasks</li>
+            <ul>
+                <li>only the tasks they are good at</li>
+            </ul>
+            <li>Actors + Tells for the rest</li>
+        </ul>
+    </div>
+
+    <div class="step" data-x="-2000" data-y="-1500">
+        <h1>Futures - the good</h1>
+        <pre><code class="large scala">
+val pages = 
+  (0 to pages by limit)
+    .map(offset => 
+      getProds(offset, limit)
+    )
+Future.sequence(pages)
+      .map(_.flatten)
+        </code></pre>
+    </div>
+
+    <div class="step big-slide" data-x="-1000" data-y="-1500">
+        <h1>Futures - the bad</h1>
+        <ul>
+            <li>Potential timeouts. Everywhere!</li>
+            <ul>
+                <li>often redundant</li>
+                <li>but if you get them wrong:</li>
+            </ul>
+        </ul>
+
+        <pre><code class="console">
+akka.pattern.AskTimeoutException: Timed out
+at akka.pattern.PromiseActorRef$$anonfun$1.apply$mcV$sp(AskSupport.scala:312)
+at akka.actor.DefaultScheduler$$anon$8.run(Scheduler.scala:191)
+at akka.dispatch.TaskInvocation.run(AbstractDispatcher.scala:137)
+at akka.dispatch.ForkJoinExecutorConfigurator$MailboxExecutionTask.exec(AbstractDispatcher.scala:506)
+at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:262)
+at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:975)
+at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1478)
+at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:104)
+        </code></pre>
+    </div>
+
+    <div id="futures-slide" class="step slide" data-x="1000" data-y="-1500">
+        <div class="routing-col col">
+            <h2>Routing</h2>
+            <div class="row">
+                <div class="actor" /></div>
+                <label>Routing</label>
+            </div>   
+        </div>
         
-        Here is where interesting thing start to happen.
-        
-        Each step of the presentation should be an element inside the `#impress` with a class name
-        of `step`. These step elements are positioned, rotated and scaled by impress.js, and
-        the 'camera' shows them on each step of the presentation.
-        
-        Positioning information is passed through data attributes.
-        
-        In the example below we only specify x and y position of the step element with `data-x="-1000"`
-        and `data-y="-1500` attributes. This means that **the center** of the element (yes, the center)
-        will be positioned in point x = -1000px and y = -1500px of the presentation 'canvas'.
-        
-        It will not be rotated or scaled.
-        
-    -->
-    <div id="apr-slide" class="step slide" data-x="-1000" data-y="-1500">
-        <div id="routing-col" class="col">
+        <div class="app-col col">
+            <h2>App Core</h2>
+            <div class="root-app-actor" class="row notyet">
+                <div class="actor" /></div>
+                <label>Get Wishlist Items</label>
+            </div>
+            <div class="child-app-actors" class="row">
+                <div class="arrow arrow-left">➡</div>
+                <div class="arrow arrow-right">➡</div>
+            </div>
+            <div class="child-app-actors" class="row">
+                <div class="actor" /></div>
+                <div class="actor" /></div>
+            </div>
+        </div>
+
+        <div class="clients-col col">
+            <h2>Rest Clients</h2>
+            <div class="row">
+                <div class="actor" /></div>
+                <label>Wishlist</label>
+            </div>
+            <div class="row">
+                <div class="actor" /></div>
+                <label>Product</label>
+            </div>
+            <div class="row">
+                <div class="actor" /></div>
+                <label>Alerts</label>
+            </div>
+        </div>
+    </div>
+
+    <div id="apr-slide" class="step slide" data-x="5000" data-y="-1500">
+        <div class="routing-col col">
             <h2>Routing</h2>
             <div class="row">
                 <div class="actor" /></div>
@@ -237,26 +351,26 @@
             </div>
             <div class="apr-row">
                 <div id="routing-to-app" class="arrow notyet">➡</div>
-            </div>   
+            </div>
         </div>
         
-        <div id="app-col" class="col">
+        <div class="app-col col">
             <h2>App Core</h2>
-            <div id="root-app-actor" class="row notyet">
+            <div class="root-app-actor row notyet">
                 <div class="actor" /></div>
                 <label>Get Wishlist Items</label>
             </div>
-            <div id="child-app-actors" class="row notyet">
+            <div class="child-app-actors row notyet">
                 <div class="arrow arrow-left">➡</div>
                 <div class="arrow arrow-right">➡</div>
             </div>
-            <div id="child-app-actors" class="row notyet">
+            <div class="child-app-actors row notyet">
                 <div class="actor" /></div>
                 <div class="actor" /></div>
             </div>
         </div>
 
-        <div id="clients-col" class="col">
+        <div class="clients-col col">
             <h2>Rest Clients</h2>
             <div class="row">
                 <div class="actor" /></div>
@@ -283,7 +397,7 @@
         <div id="response" class="message notyet" /></div>
     </div>
 
-    <div id="apr-incoming-request" class="step dummy" data-x="-1000" data-y="-1500">
+    <div id="apr-incoming-request" class="step dummy" data-x="5000" data-y="-1500">
         <script type="text/javascript">
 
 
@@ -295,55 +409,61 @@
         </script>
     </div>
 
-    <div id="apr-create-apr" class="step dummy" data-x="-1000" data-y="-1500">
+    <div id="apr-create-apr" class="step dummy" data-x="5000" data-y="-1500">
         <script type="text/javascript">
             onSlideAddClass("apr-create-apr", "#request", "apr-request")
             onSlideAddClass("apr-create-apr", ".apr-actor", "create")
         </script>
     </div>
 
-    <div id="apr-create-app-actors" class="step dummy" data-x="-1000" data-y="-1500">
+    <div id="apr-create-app-actors" class="step dummy" data-x="5000" data-y="-1500">
         <script type="text/javascript">
-            onSlideAddClass("apr-create-app-actors", "#root-app-actor", "create")
+            onSlideAddClass("apr-create-app-actors", ".root-app-actor", "create")
             onSlideAddClass("apr-create-app-actors", "#routing-to-app", "create")
         </script>
     </div>
 
-    <div id="apr-fire-messages" class="step dummy" data-x="-1000" data-y="-1500">
+    <div id="apr-fire-messages" class="step dummy" data-x="5000" data-y="-1500">
         <script type="text/javascript">
             onSlideAddClass("apr-fire-messages", "#out-message1", "go")
             onSlideAddClass("apr-fire-messages", "#out-message2", "go")
         </script>
     </div>
 
-    <div id="apr-alert-message-back" class="step dummy" data-x="-1000" data-y="-1500">
+    <div id="apr-alert-message-back" class="step dummy" data-x="5000" data-y="-1500">
         <script type="text/javascript">
             onSlideAddClass("apr-alert-message-back", "#out-message2", "stop")
             onSlideAddClass("apr-alert-message-back", "#return-message2", "go")
         </script>
     </div>
 
-    <div id="apr-wl-message-back" class="step dummy" data-x="-1000" data-y="-1500">
+    <div id="apr-wl-message-back" class="step dummy" data-x="5000" data-y="-1500">
         <script type="text/javascript">
             onSlideAddClass("apr-wl-message-back", "#out-message1", "stop")
             onSlideAddClass("apr-wl-message-back", "#return-message1", "go")
         </script>
     </div>
 
-    <div id="apr-fire-ps-message" class="step dummy" data-x="-1000" data-y="-1500">
+    <div id="apr-fire-ps-message" class="step dummy" data-x="5000" data-y="-1500">
         <script type="text/javascript">
             onSlideAddClass("apr-fire-ps-message", "#out-message3", "go")
         </script>
     </div>
 
-    <div id="apr-ps-message-back" class="step dummy" data-x="-1000" data-y="-1500">
+    <div id="apr-ps-message-back" class="step dummy" data-x="5000" data-y="-1500">
         <script type="text/javascript">
             onSlideAddClass("apr-ps-message-back", "#out-message3", "stop")
             onSlideAddClass("apr-ps-message-back", "#return-message3", "go")
         </script>
     </div>
 
-    <div id="apr-complete-response-message" class="step dummy" data-x="-1000" data-y="-1500">
+    <div id="apr-app-children" class="step dummy" data-x="5000" data-y="-1500">
+        <script type="text/javascript">
+            onSlideAddClass("apr-app-children", "#apr-slide .child-app-actors", "create")
+        </script>
+    </div>
+
+    <div id="apr-complete-response-message" class="step dummy" data-x="5000" data-y="-1500">
         <script type="text/javascript">            
             onSlideAddClass("apr-complete-response-message", "#return-message1", "stop")
             onSlideAddClass("apr-complete-response-message", "#return-message2", "stop")
@@ -352,7 +472,7 @@
         </script>
     </div>
 
-    <div id="apr-complete-response" class="step dummy" data-x="-1000" data-y="-1500">
+    <div id="apr-complete-response" class="step dummy" data-x="5000" data-y="-1500">
         <script type="text/javascript">
             onSlideAddClass("apr-complete-response", "#request", "stop")
             onSlideAddClass("apr-complete-response", "#return-message4", "stop")
@@ -360,57 +480,54 @@
         </script>
     </div>
 
-    <div id="apr-cleanup" class="step dummy" data-x="-1000" data-y="-1500">
+    <div id="apr-cleanup" class="step dummy" data-x="5000" data-y="-1500">
         <script type="text/javascript">
-            onSlideAddClass("apr-cleanup", ".apr-actor", "stop")
-            onSlideAddClass("apr-cleanup", "#root-app-actor", "stop")
+            onSlideAddClass("apr-cleanup", "#apr-slide .root-app-actor", "stop")
+            onSlideAddClass("apr-cleanup", "#apr-slide .child-app-actors", "stop")
             onSlideAddClass("apr-cleanup", "#routing-to-app", "stop")
             onSlideAddClass("apr-cleanup", ".apr-actor", "stop")
         </script>
     </div>
 
-    <div id="apr-code" class="step slide" data-x="1000" data-y="-1500">
-        <pre>
-            <code class="scala">
-abstract class PerRequestActor(r: RequestContext,
-                               message: DomainObject) 
-                               extends Actor {
+    <div id="apr-code" class="step big-slide" data-x="6000" data-y="-1500">
+        <pre><code class="scala">
+trait PerRequest extends Actor {
+
+  def r: RequestContext
   def target: ActorRef
-  setReceiveTimeout(5 seconds)
-  target ! request
+  def message: RestMessage
+
+  setReceiveTimeout(2.seconds)
+  target ! message
 
   def receive = {
-    case ReceiveTimeout    => completeWithTimeout  
-    case Failure(e)        => completeWithError(e)
-    case res: DomainObject => completeWithSuccess(res)
+    case res: RestMessage ⇒ 
+      complete(200, res)
+
+    case v: Validation ⇒ 
+      complete(400, v)
+
+    case ReceiveTimeout ⇒ 
+      complete(504, Error("Request Timeout"))
   }
 
-  def completeWithSuccess(res: DomainObject) = {
-    r.complete(res)
-    stop(self)
-  }
-
-  def completeWithError{e: Throwable) = {
-    r.complete(InternalServerError, Error(e))
-    stop(self)
-  }
-
-  def completeWithTimeout = {
-    r.complete(GatewayTimeout, Timeout)
+  def complete[T](status: StatusCode, obj: T) = {
+    r.complete(status, obj)
     stop(self)
   }
 
   override val supervisorStrategy =
     OneForOneStrategy() {
-      case e => {
-        completeWithError(e)
-        stop(self)
+      case e ⇒ {
+        complete(500, Error(e.getMessage))
         Stop
       }
     }
 }
-            </code>
-        </pre>
+        </code></pre>
+    </div>
+
+    <div id="apr-code2" class="step dummy" data-x="6000" data-y="-900">
     </div>
 
 <!-- 
@@ -532,9 +649,9 @@ abstract class PerRequestActor(r: RequestContext,
         <q>Would you like to <strong>impress your audience</strong> with <strong>stunning visualization</strong> of your talk?</q>
     </div> -->
 
-    <div class="step slide" data-x="2000" data-y="-1500">
+<!--     <div class="step slide" data-x="2000" data-y="-1500">
         <q>sdf;smfs;dmfs;dkmf;m;sdlmf</q>
-    </div>
+    </div> -->
 
     <!--
         
@@ -546,11 +663,11 @@ abstract class PerRequestActor(r: RequestContext,
         down (4 times) to make it back to its correct size.
         
     -->
-    <div id="title" class="step" data-x="0" data-y="0" data-scale="4">
+<!--     <div id="title" class="step" data-x="0" data-y="0" data-scale="4">
         <span class="try">then you should try</span>
         <h1>impress.js<sup>*</sup></h1>
         <span class="footnote"><sup>*</sup> no rhyme intended</span>
-    </div>
+    </div> -->
 
     <!--
         
@@ -560,7 +677,7 @@ abstract class PerRequestActor(r: RequestContext,
         element should be rotated by 90 degrees clockwise.
         
     -->
-    <div id="its" class="step" data-x="850" data-y="3000" data-rotate="90" data-scale="5">
+<!--     <div id="its" class="step" data-x="850" data-y="3000" data-rotate="90" data-scale="5">
         <p>It's a <strong>presentation tool</strong> <br/>
         inspired by the idea behind <a href="http://prezi.com">prezi.com</a> <br/>
         and based on the <strong>power of CSS3 transforms and transitions</strong> in modern browsers.</p>
@@ -569,7 +686,7 @@ abstract class PerRequestActor(r: RequestContext,
     <div id="big" class="step" data-x="3500" data-y="2100" data-rotate="180" data-scale="6">
         <p>visualize your <b>big</b> <span class="thoughts">thoughts</span></p>
     </div>
-
+ -->
     <!--
         
         And now it gets really exciting! We move into third dimension!
@@ -579,9 +696,9 @@ abstract class PerRequestActor(r: RequestContext,
         positioned far away from us (by 3000px).
         
     -->
-    <div id="tiny" class="step" data-x="2825" data-y="2325" data-z="-3000" data-rotate="300" data-scale="1">
+<!--     <div id="tiny" class="step" data-x="2825" data-y="2325" data-z="-3000" data-rotate="300" data-scale="1">
         <p>and <b>tiny</b> ideas</p>
-    </div>
+    </div> -->
 
     <!--
         
@@ -603,7 +720,7 @@ abstract class PerRequestActor(r: RequestContext,
         Only one current step has the `present` class.
         
     -->
-    <div id="ing" class="step" data-x="3500" data-y="-850" data-rotate="270" data-scale="6">
+<!--     <div id="ing" class="step" data-x="3500" data-y="-850" data-rotate="270" data-scale="6">
         <p>by <b class="positioning">positioning</b>, <b class="rotating">rotating</b> and <b class="scaling">scaling</b> them on an infinite canvas</p>
     </div>
 
@@ -618,7 +735,7 @@ abstract class PerRequestActor(r: RequestContext,
 
     <div id="one-more-thing" class="step" data-x="6000" data-y="4000" data-scale="2">
         <p>one more thing...</p>
-    </div>
+    </div> -->
 
     <!--
         
@@ -632,10 +749,10 @@ abstract class PerRequestActor(r: RequestContext,
         as `data-rotate` (these two are basically aliases).
         
     -->
-    <div id="its-in-3d" class="step" data-x="6200" data-y="4300" data-z="-100" data-rotate-x="-40" data-rotate-y="10" data-scale="2">
+<!--     <div id="its-in-3d" class="step" data-x="6200" data-y="4300" data-z="-100" data-rotate-x="-40" data-rotate-y="10" data-scale="2">
         <p><span class="have">have</span> <span class="you">you</span> <span class="noticed">noticed</span> <span class="its">it's</span> <span class="in">in</span> <b>3D<sup>*</sup></b>?</p>
         <span class="footnote">* beat that, prezi ;)</span>
-    </div>
+    </div> -->
 
     <!--
         
@@ -652,8 +769,8 @@ abstract class PerRequestActor(r: RequestContext,
         CSS transfrom docs: https://developer.mozilla.org/en/CSS/transform
         
     -->
-    <div id="overview" class="step" data-x="3000" data-y="1500" data-scale="10">
-    </div>
+<!--     <div id="overview" class="step" data-x="3000" data-y="1500" data-scale="10">
+    </div> -->
 
 </div>
 
@@ -706,9 +823,10 @@ if ("ontouchstart" in document.documentElement) {
         
     -->
     <script src="js/impress.js"></script>
+    <script src="js/impressConsole.js"></script>
     <script>
-        var impress = impress()
-        impress.init()
+        impress().init()
+        impressConsole().init()
     </script>
 
 <!--
